@@ -63,6 +63,15 @@ class Redis {
     const connectionName = [ 'PeerTube', name ].join('')
     const connectTimeout = 20000 // Could be slow since node use sync call to compile PeerTube
 
+    let password = CONFIG.REDIS.AUTH
+    let username: string | undefined
+
+    if (password && password.includes(':')) {
+      const parts = password.split(':')
+      username = parts[0]
+      password = parts.slice(1).join(':')
+    }
+    
     if (CONFIG.REDIS.SENTINEL.ENABLED) {
       if (logOptions) {
         logger.info(
@@ -75,7 +84,8 @@ class Redis {
         connectionName,
         connectTimeout,
         enableTLSForSentinelMode: CONFIG.REDIS.SENTINEL.ENABLE_TLS,
-        sentinelPassword: CONFIG.REDIS.AUTH,
+        sentinelUsername: username,
+        sentinelPassword: password,
         sentinels: CONFIG.REDIS.SENTINEL.SENTINELS,
         name: CONFIG.REDIS.SENTINEL.MASTER_NAME,
         ...options
@@ -92,7 +102,8 @@ class Redis {
     return {
       connectionName,
       connectTimeout,
-      password: CONFIG.REDIS.AUTH,
+      username: username
+      password: password,
       db: CONFIG.REDIS.DB,
       host: CONFIG.REDIS.HOSTNAME,
       port: CONFIG.REDIS.PORT,
